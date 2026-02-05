@@ -31,12 +31,12 @@ resource "aws_s3_bucket_versioning" "bucket_versioning" {
 
 
 
-# terraform {
-#   backend "s3" {
-#     bucket = "apaa-eks-bucket"
-#     key    = "dev/terraform.tfstate"
-#     region = "us-east-1"
-#     encrypt = true
-#     use_lockfile = true
-#   }
-# }
+terraform {
+  backend "s3" {
+    bucket = "apaa-eks-bucket"
+    key    = "dev/terraform.tfstate"
+    region = "us-east-1"
+    encrypt = true
+    use_lockfile = true
+  }
+}
