@@ -15,7 +15,7 @@ provider "aws" {
 
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "my-eks-bucket"
+  bucket = "apaa-eks-bucket"
   lifecycle {
     prevent_destroy = true # Prevents accidental 'terraform destroy' of the bucket
  }
@@ -33,7 +33,7 @@ resource "aws_s3_bucket_versioning" "bucket_versioning" {
 
 # terraform {
 #   backend "s3" {
-#     bucket = "my-eks-bucket"
+#     bucket = "apaa-eks-bucket"
 #     key    = "dev/terraform.tfstate"
 #     region = "us-east-1"
 #     encrypt = true
