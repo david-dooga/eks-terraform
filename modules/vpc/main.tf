@@ -42,6 +42,7 @@ resource "aws_subnet" "private_subnet" {
   tags = {
     Name = "private-subnet-${count.index + 1}"
     tier = "private"
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
   }
 }
 

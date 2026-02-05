@@ -112,3 +112,60 @@ resource "aws_eks_node_group" "example" {
     aws_iam_role_policy_attachment.eks_node_policy
   ]
 }
+
+
+
+# 1. IAM Role for EBS CSI Driver (using Pod Identity Trust)
+
+
+data "aws_iam_policy_document" "ebs_csi_trust" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
+    }
+    actions = [
+      "sts:AssumeRole",
+      "sts:TagSession"
+    ]
+  }
+}
+
+resource "aws_iam_role" "ebs_csi_role" {
+  name               = "${var.eks_cluster_name}-ebs-csi-role"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_trust.json
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.ebs_csi_role.name
+}
+
+
+# 2. EKS Add-ons
+
+
+# Required for Pod Identity to work
+resource "aws_eks_addon" "pod_identity" {
+  cluster_name = aws_eks_cluster.main_eks_cluster.name
+  addon_name   = "eks-pod-identity-agent"
+}
+
+# The EBS Driver itself
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name = aws_eks_cluster.main_eks_cluster.name
+  addon_name   = "aws-ebs-csi-driver"
+  # Ensures the agent is there before the driver tries to use it
+  depends_on   = [aws_eks_addon.pod_identity]
+}
+
+
+# 3. Pod Identity Association (The "Bridge")
+
+resource "aws_eks_pod_identity_association" "ebs_csi" {
+  cluster_name    = aws_eks_cluster.main_eks_cluster.name
+  namespace       = "kube-system"
+  service_account = "ebs-csi-controller-sa" # Default name created by the addon
+  role_arn        = aws_iam_role.ebs_csi_role.arn
+}
